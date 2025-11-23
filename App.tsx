@@ -1,36 +1,36 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BlueCard, BlueButton, IconBox, Avatar } from './components/UIComponents';
 import { User, Post, ServerMetrics, Comment } from './types';
 import { analyzeSystemHealth } from './services/geminiService';
 
 // --- Mock Data ---
 const CURRENT_USER: User = {
-    id: 'u1',
-    name: 'Admin User',
-    avatar: 'https://picsum.photos/200/200',
+    id: 'system',
+    name: 'System Monitor',
+    avatar: 'https://ui-avatars.com/api/?name=System+Monitor&background=2563eb&color=fff&bold=true',
     role: 'Admin'
 };
 
 const INITIAL_POSTS: Post[] = [
     {
         id: 'p1',
-        userId: 'u2',
-        userName: 'DevOps Lead',
-        userAvatar: 'https://picsum.photos/201/201',
-        content: 'Chúng ta vừa cập nhật kernel mới cho Cluster A. Hiệu năng tăng 15%. Mọi thứ đều ổn định.',
-        likes: 12,
+        userId: 'system',
+        userName: 'System Monitor',
+        userAvatar: 'https://ui-avatars.com/api/?name=System+Monitor&background=2563eb&color=fff&bold=true',
+        content: 'Bảo trì định kỳ hoàn tất. Kernel v5.14 đã được cập nhật thành công trên cụm máy chủ chính.',
+        likes: 125,
         comments: [
-             { id: 'c1', userId: 'u3', userName: 'Junior Dev', userAvatar: 'https://picsum.photos/202/202', content: 'Tuyệt vời quá anh ơi!', timestamp: new Date() }
+             { id: 'c1', userId: 'user1', userName: 'DevUser_01', userAvatar: 'https://ui-avatars.com/api/?name=Dev+One&background=1e293b&color=94a3b8', content: 'Xác nhận latency giảm đáng kể.', timestamp: new Date() }
         ],
         timestamp: new Date(Date.now() - 3600000)
     },
     {
         id: 'p2',
-        userId: 'u4',
-        userName: 'System Bot',
-        userAvatar: 'https://picsum.photos/203/203',
-        content: 'CẢNH BÁO: Lưu lượng truy cập tăng đột biến ở Asia Region.',
-        likes: 5,
+        userId: 'system',
+        userName: 'System Monitor',
+        userAvatar: 'https://ui-avatars.com/api/?name=System+Monitor&background=2563eb&color=fff&bold=true',
+        content: 'Phát hiện lưu lượng truy cập bất thường từ dải IP 192.168.x.x. Firewall đã tự động kích hoạt rule block.',
+        likes: 42,
         comments: [],
         timestamp: new Date(Date.now() - 7200000)
     }
@@ -50,7 +50,6 @@ const App: React.FC = () => {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
     const [newPostContent, setNewPostContent] = useState('');
-    const [activeTab, setActiveTab] = useState<'feed' | 'profile'>('feed');
 
     // Simulate Server Metrics
     useEffect(() => {
@@ -193,13 +192,13 @@ const App: React.FC = () => {
                         <textarea 
                             className="w-full bg-slate-800/50 border border-blue-500/30 rounded-lg p-3 text-blue-100 placeholder-blue-500/50 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 resize-none transition-all"
                             rows={3}
-                            placeholder="Cập nhật tình hình hệ thống..."
+                            placeholder="Ghi nhận log hệ thống..."
                             value={newPostContent}
                             onChange={(e) => setNewPostContent(e.target.value)}
                         ></textarea>
                         <div className="flex justify-end mt-2">
                             <BlueButton onClick={handleCreatePost} className="text-sm">
-                                <i className="fa-solid fa-paper-plane"></i> Đăng
+                                <i className="fa-solid fa-paper-plane"></i> Gửi Log
                             </BlueButton>
                         </div>
                     </div>
@@ -218,50 +217,6 @@ const App: React.FC = () => {
         </div>
     );
 
-    const renderProfile = () => (
-        <BlueCard className="flex flex-col items-center py-12">
-            <div className="relative mb-6 group">
-                <Avatar src={CURRENT_USER.avatar} size="lg" />
-                <div className="absolute inset-0 rounded-full border-2 border-blue-400 animate-pulse-slow"></div>
-            </div>
-            <h2 className="text-3xl font-bold text-white mb-2 text-shadow-blue">{CURRENT_USER.name}</h2>
-            <span className="bg-blue-600/20 text-blue-300 px-4 py-1 rounded-full text-sm border border-blue-500/50 mb-6">
-                {CURRENT_USER.role}
-            </span>
-            
-            <div className="grid grid-cols-3 gap-8 w-full max-w-md text-center">
-                <div className="p-4 rounded-lg bg-slate-800/40 border border-blue-500/20">
-                    <div className="text-2xl font-bold text-white">{posts.filter(p => p.userId === CURRENT_USER.id).length}</div>
-                    <div className="text-sm text-blue-400">Posts</div>
-                </div>
-                <div className="p-4 rounded-lg bg-slate-800/40 border border-blue-500/20">
-                    <div className="text-2xl font-bold text-white">45</div>
-                    <div className="text-sm text-blue-400">Contributions</div>
-                </div>
-                <div className="p-4 rounded-lg bg-slate-800/40 border border-blue-500/20">
-                    <div className="text-2xl font-bold text-white">120h</div>
-                    <div className="text-sm text-blue-400">Uptime</div>
-                </div>
-            </div>
-
-            <div className="mt-8 w-full max-w-md">
-                 <h3 className="text-lg font-semibold text-blue-300 mb-4 border-b border-blue-500/30 pb-2">Recent Activity</h3>
-                 <div className="space-y-3">
-                     <div className="flex items-center gap-3 text-sm text-blue-200">
-                         <i className="fa-solid fa-check-circle text-green-400"></i>
-                         <span>Resolved incident #4092</span>
-                         <span className="ml-auto text-xs text-blue-500">2h ago</span>
-                     </div>
-                     <div className="flex items-center gap-3 text-sm text-blue-200">
-                         <i className="fa-solid fa-code-branch text-blue-400"></i>
-                         <span>Deployed hotfix to production</span>
-                         <span className="ml-auto text-xs text-blue-500">5h ago</span>
-                     </div>
-                 </div>
-            </div>
-        </BlueCard>
-    );
-
     return (
         <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a1025] to-black pb-20">
             {/* Header */}
@@ -271,40 +226,27 @@ const App: React.FC = () => {
                         <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.6)]">
                             <i className="fa-solid fa-bolt text-white text-xl"></i>
                         </div>
-                        <h1 className="text-xl font-bold text-white tracking-wide">Blue<span className="text-blue-400">Pulse</span></h1>
+                        <h1 className="text-xl font-bold text-white tracking-wide">Blue<span className="text-blue-400">Pulse</span> Monitor</h1>
                     </div>
-                    <div className="flex gap-2">
-                        <button 
-                            onClick={() => setActiveTab('feed')}
-                            className={`px-4 py-2 rounded-lg transition-colors ${activeTab === 'feed' ? 'bg-blue-600/20 text-blue-300 border border-blue-500/50' : 'text-gray-400 hover:text-white'}`}
-                        >
-                            <i className="fa-solid fa-stream mr-2"></i> Feed
-                        </button>
-                        <button 
-                            onClick={() => setActiveTab('profile')}
-                            className={`px-4 py-2 rounded-lg transition-colors ${activeTab === 'profile' ? 'bg-blue-600/20 text-blue-300 border border-blue-500/50' : 'text-gray-400 hover:text-white'}`}
-                        >
-                            <i className="fa-regular fa-id-card mr-2"></i> Profile
-                        </button>
+                    <div className="flex items-center gap-3">
+                        <div className="flex flex-col items-end">
+                            <span className="text-xs text-blue-400 uppercase tracking-wider hidden sm:block">System Status</span>
+                            <span className="text-[10px] text-green-400 font-mono hidden sm:block">LIVE MONITORING</span>
+                        </div>
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e]"></div>
                     </div>
                 </div>
             </header>
 
             <main className="max-w-4xl mx-auto px-4 py-8">
-                {activeTab === 'feed' && (
-                    <>
-                        {renderServerStatus()}
-                        {renderFeed()}
-                    </>
-                )}
-                {activeTab === 'profile' && renderProfile()}
+                {renderServerStatus()}
+                {renderFeed()}
             </main>
         </div>
     );
 };
 
 // --- Sub Component: Post Item ---
-// Extracted to manage its own comment input state cleanly
 const PostItem: React.FC<{ post: Post; onLike: () => void; onComment: (content: string) => void }> = ({ post, onLike, onComment }) => {
     const [commentText, setCommentText] = useState('');
     const [showComments, setShowComments] = useState(false);
@@ -342,14 +284,14 @@ const PostItem: React.FC<{ post: Post; onLike: () => void; onComment: (content: 
                     className={`flex items-center gap-2 transition-colors ${post.isLiked ? 'text-blue-400' : 'text-gray-400 hover:text-blue-400'}`}
                 >
                     <i className={`${post.isLiked ? 'fa-solid' : 'fa-regular'} fa-thumbs-up`}></i>
-                    <span>{post.likes} Like</span>
+                    <span>{post.likes} Ack</span>
                 </button>
                 <button 
                     onClick={() => setShowComments(!showComments)}
                     className="flex items-center gap-2 text-gray-400 hover:text-blue-400 transition-colors"
                 >
                     <i className="fa-regular fa-comment"></i>
-                    <span>{post.comments.length} Comment</span>
+                    <span>{post.comments.length} Log</span>
                 </button>
             </div>
 
@@ -374,7 +316,7 @@ const PostItem: React.FC<{ post: Post; onLike: () => void; onComment: (content: 
                             type="text" 
                             value={commentText}
                             onChange={(e) => setCommentText(e.target.value)}
-                            placeholder="Viết bình luận..." 
+                            placeholder="Ghi chú..." 
                             className="flex-1 bg-slate-900/50 border border-blue-500/30 rounded-lg px-3 py-2 text-sm text-blue-100 focus:outline-none focus:border-blue-400"
                         />
                         <button type="submit" className="text-blue-400 hover:text-blue-300 px-2">
