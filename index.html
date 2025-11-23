@@ -7,14 +7,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script>
+      // FIX FOR VERCEL DEPLOYMENT: Polyfill process.env to prevent ReferenceError crash
+      if (typeof process === 'undefined') {
+        window.process = { env: {} };
+      }
+    </script>
+    <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
               cyber: {
-                900: '#0a0f1e', // Very dark blue
-                800: '#111827', // Dark blue gray
-                700: '#1e293b', // Slate
+                950: '#020617', // Deepest Blue
+                900: '#0f172a', // Slate 900
+                800: '#1e293b', // Slate 800
+                700: '#334155', // Slate 700
                 600: '#2563eb', // Primary Blue
                 500: '#3b82f6', // Bright Blue
                 400: '#60a5fa', // Lighter Blue
@@ -30,9 +37,11 @@
     </script>
     <style>
       body {
-        background-color: #050a14;
+        background-color: #020617; /* Deep Blue Background */
         color: #e2e8f0;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-image: radial-gradient(circle at 50% 0%, #1e3a8a 0%, #020617 50%);
+        min-height: 100vh;
       }
       /* Custom Scrollbar */
       ::-webkit-scrollbar {
@@ -46,7 +55,7 @@
         border-radius: 4px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #2563eb; 
+        background: #60a5fa; 
       }
     </style>
   <script type="importmap">

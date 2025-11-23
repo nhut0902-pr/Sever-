@@ -19,9 +19,7 @@ const INITIAL_POSTS: Post[] = [
         userAvatar: 'https://ui-avatars.com/api/?name=System+Monitor&background=2563eb&color=fff&bold=true',
         content: 'Bảo trì định kỳ hoàn tất. Kernel v5.14 đã được cập nhật thành công trên cụm máy chủ chính.',
         likes: 125,
-        comments: [
-             { id: 'c1', userId: 'user1', userName: 'DevUser_01', userAvatar: 'https://ui-avatars.com/api/?name=Dev+One&background=1e293b&color=94a3b8', content: 'Xác nhận latency giảm đáng kể.', timestamp: new Date() }
-        ],
+        comments: [], 
         timestamp: new Date(Date.now() - 3600000)
     },
     {
@@ -137,18 +135,18 @@ const App: React.FC = () => {
     // --- Sub-components (Render Helpers) ---
 
     const renderServerStatus = () => (
-        <BlueCard className="mb-6 relative overflow-hidden group">
+        <BlueCard className="mb-6 relative overflow-hidden group border-blue-500/30">
             {/* Background Glow Animation */}
-            <div className={`absolute top-0 right-0 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 transition-colors duration-1000 ${metrics.status === 'Critical' ? 'bg-red-500/30' : ''}`}></div>
+            <div className={`absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 transition-colors duration-1000 ${metrics.status === 'Critical' ? 'bg-red-500/20' : ''}`}></div>
             
             <div className="flex justify-between items-center mb-6 relative z-10">
-                <h2 className="text-2xl font-bold text-blue-100 flex items-center gap-3">
-                    <i className="fa-solid fa-server"></i> Trạng Thái Server
+                <h2 className="text-2xl font-bold text-blue-50 flex items-center gap-3 text-shadow-glow">
+                    <i className="fa-solid fa-server text-blue-400"></i> Trạng Thái Server
                 </h2>
                 <span className={`px-3 py-1 rounded-full text-sm font-bold border ${
-                    metrics.status === 'Healthy' ? 'bg-green-500/20 text-green-400 border-green-500/50' :
-                    metrics.status === 'Warning' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' :
-                    'bg-red-500/20 text-red-400 border-red-500/50'
+                    metrics.status === 'Healthy' ? 'bg-green-500/10 text-green-400 border-green-500/30' :
+                    metrics.status === 'Warning' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30' :
+                    'bg-red-500/10 text-red-400 border-red-500/30'
                 }`}>
                     {metrics.status.toUpperCase()}
                 </span>
@@ -161,15 +159,15 @@ const App: React.FC = () => {
                 <IconBox icon="fa-users" label="Users" value={metrics.activeUsers} />
             </div>
 
-            <div className="mt-6 pt-4 border-t border-blue-500/30 relative z-10">
+            <div className="mt-6 pt-4 border-t border-blue-500/20 relative z-10">
                 <div className="flex justify-between items-start">
                     <div className="flex-1 mr-4">
                         <h3 className="text-sm font-semibold text-blue-300 mb-1">AI System Diagnosis</h3>
                         <p className="text-blue-100 text-sm italic min-h-[40px]">
                             {aiAnalysis ? (
-                                <span className="typing-effect">{aiAnalysis}</span>
+                                <span className="typing-effect text-cyan-300">{aiAnalysis}</span>
                             ) : (
-                                <span className="text-blue-500/50">Chờ phân tích...</span>
+                                <span className="text-slate-400">Chờ phân tích...</span>
                             )}
                         </p>
                     </div>
@@ -190,7 +188,7 @@ const App: React.FC = () => {
                     <Avatar src={CURRENT_USER.avatar} />
                     <div className="flex-1">
                         <textarea 
-                            className="w-full bg-slate-800/50 border border-blue-500/30 rounded-lg p-3 text-blue-100 placeholder-blue-500/50 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 resize-none transition-all"
+                            className="w-full bg-slate-800/50 border border-blue-500/20 rounded-lg p-3 text-blue-50 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none transition-all"
                             rows={3}
                             placeholder="Ghi nhận log hệ thống..."
                             value={newPostContent}
@@ -218,19 +216,19 @@ const App: React.FC = () => {
     );
 
     return (
-        <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a1025] to-black pb-20">
+        <div className="min-h-screen pb-20">
             {/* Header */}
-            <header className="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-lg border-b border-blue-500/30 shadow-lg shadow-blue-900/20">
+            <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-lg border-b border-blue-500/20 shadow-lg shadow-blue-900/10">
                 <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.6)]">
+                        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.4)]">
                             <i className="fa-solid fa-bolt text-white text-xl"></i>
                         </div>
                         <h1 className="text-xl font-bold text-white tracking-wide">Blue<span className="text-blue-400">Pulse</span> Monitor</h1>
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="flex flex-col items-end">
-                            <span className="text-xs text-blue-400 uppercase tracking-wider hidden sm:block">System Status</span>
+                            <span className="text-xs text-blue-300 uppercase tracking-wider hidden sm:block">System Status</span>
                             <span className="text-[10px] text-green-400 font-mono hidden sm:block">LIVE MONITORING</span>
                         </div>
                         <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e]"></div>
@@ -265,15 +263,15 @@ const PostItem: React.FC<{ post: Post; onLike: () => void; onComment: (content: 
             <div className="flex items-start gap-4 mb-4">
                 <Avatar src={post.userAvatar} />
                 <div>
-                    <h3 className="font-bold text-white">{post.userName}</h3>
+                    <h3 className="font-bold text-blue-100">{post.userName}</h3>
                     <p className="text-xs text-blue-400">{post.timestamp.toLocaleTimeString()} - {post.timestamp.toLocaleDateString()}</p>
                 </div>
             </div>
             
-            <p className="text-blue-100 mb-4 leading-relaxed whitespace-pre-line">{post.content}</p>
+            <p className="text-slate-200 mb-4 leading-relaxed whitespace-pre-line">{post.content}</p>
             
             {post.image && (
-                <div className="mb-4 rounded-lg overflow-hidden border border-blue-500/30">
+                <div className="mb-4 rounded-lg overflow-hidden border border-blue-500/20">
                     <img src={post.image} alt="Post content" className="w-full h-auto" />
                 </div>
             )}
@@ -281,14 +279,14 @@ const PostItem: React.FC<{ post: Post; onLike: () => void; onComment: (content: 
             <div className="flex items-center gap-6 border-t border-blue-500/20 pt-3">
                 <button 
                     onClick={onLike}
-                    className={`flex items-center gap-2 transition-colors ${post.isLiked ? 'text-blue-400' : 'text-gray-400 hover:text-blue-400'}`}
+                    className={`flex items-center gap-2 transition-colors ${post.isLiked ? 'text-blue-400' : 'text-slate-400 hover:text-blue-400'}`}
                 >
                     <i className={`${post.isLiked ? 'fa-solid' : 'fa-regular'} fa-thumbs-up`}></i>
                     <span>{post.likes} Ack</span>
                 </button>
                 <button 
                     onClick={() => setShowComments(!showComments)}
-                    className="flex items-center gap-2 text-gray-400 hover:text-blue-400 transition-colors"
+                    className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors"
                 >
                     <i className="fa-regular fa-comment"></i>
                     <span>{post.comments.length} Log</span>
@@ -304,9 +302,9 @@ const PostItem: React.FC<{ post: Post; onLike: () => void; onComment: (content: 
                             <div>
                                 <div className="flex items-center gap-2">
                                     <span className="font-semibold text-sm text-blue-200">{comment.userName}</span>
-                                    <span className="text-[10px] text-gray-500">{comment.timestamp.toLocaleTimeString()}</span>
+                                    <span className="text-[10px] text-slate-500">{comment.timestamp.toLocaleTimeString()}</span>
                                 </div>
-                                <p className="text-sm text-gray-300">{comment.content}</p>
+                                <p className="text-sm text-slate-300">{comment.content}</p>
                             </div>
                         </div>
                     ))}
@@ -317,9 +315,9 @@ const PostItem: React.FC<{ post: Post; onLike: () => void; onComment: (content: 
                             value={commentText}
                             onChange={(e) => setCommentText(e.target.value)}
                             placeholder="Ghi chú..." 
-                            className="flex-1 bg-slate-900/50 border border-blue-500/30 rounded-lg px-3 py-2 text-sm text-blue-100 focus:outline-none focus:border-blue-400"
+                            className="flex-1 bg-slate-800/50 border border-blue-500/20 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
                         />
-                        <button type="submit" className="text-blue-400 hover:text-blue-300 px-2">
+                        <button type="submit" className="text-blue-500 hover:text-blue-400 px-2">
                             <i className="fa-solid fa-paper-plane"></i>
                         </button>
                     </form>
