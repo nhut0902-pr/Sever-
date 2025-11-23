@@ -1,0 +1,5 @@
+{
+  "name": "BluePulse Server Monitor",
+  "description": "A server status dashboard with social features for dev teams, styled in a deep aesthetic blue theme.",
+  "requestFramePermissions": []
+}
