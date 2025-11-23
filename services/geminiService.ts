@@ -4,10 +4,13 @@ import { ServerMetrics } from "../types";
 // Helper to safely get AI instance
 const getAiClient = () => {
   try {
-    // Check if process exists to avoid ReferenceError in some browser builds
-    const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
+    // Robustly retrieve API Key, checking global window.process if direct process access fails
+    // @ts-ignore - Handles both Node and Browser environments
+    const env = typeof process !== 'undefined' ? process.env : (window.process?.env || {});
+    const apiKey = env.API_KEY;
+
     if (!apiKey) {
-      console.warn("API Key is missing.");
+      console.warn("API Key is missing. AI features will be disabled.");
       return null;
     }
     return new GoogleGenAI({ apiKey });
