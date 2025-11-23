@@ -20,8 +20,10 @@ interface ErrorBoundaryState {
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = { hasError: false, error: null };
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
+  static getDerivedStateFromError(error: any): ErrorBoundaryState {
+    // Normalize error to an Error object if it isn't one
+    const err = error instanceof Error ? error : new Error(String(error));
+    return { hasError: true, error: err };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -40,13 +42,19 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
           alignItems: 'center', 
           justifyContent: 'center',
           padding: '20px',
-          fontFamily: 'monospace'
+          fontFamily: 'monospace',
+          textAlign: 'center'
         }}>
           <h1 style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚠️ System Crash</h1>
-          <div style={{ backgroundColor: '#1e293b', padding: '1.5rem', borderRadius: '8px', maxWidth: '800px', width: '100%', overflowX: 'auto' }}>
-            <p style={{ margin: 0 }}>{this.state.error?.toString()}</p>
+          <div style={{ backgroundColor: '#1e293b', padding: '1.5rem', borderRadius: '8px', maxWidth: '800px', width: '100%', overflowX: 'auto', border: '1px solid #334155' }}>
+            <p style={{ margin: 0, color: '#f87171' }}>{this.state.error?.message || "Unknown Error"}</p>
           </div>
-          <p style={{ marginTop: '1rem', color: '#94a3b8' }}>Check the developer console for more details.</p>
+          <button 
+            onClick={() => window.location.reload()}
+            style={{ marginTop: '20px', padding: '10px 20px', background: '#3b82f6', border: 'none', borderRadius: '6px', color: 'white', cursor: 'pointer' }}
+          >
+            Reboot System
+          </button>
         </div>
       );
     }

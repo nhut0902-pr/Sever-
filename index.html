@@ -7,8 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script>
-      // CRITICAL FIX FOR VERCEL: Define 'process' globally before any app code runs
-      // This prevents "ReferenceError: process is not defined" crashes
+      // Polyfill for process.env to prevent crashes
       window.process = window.process || {};
       window.process.env = window.process.env || {};
     </script>
@@ -58,18 +57,24 @@
         background: #60a5fa; 
       }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0"
-  }
-}
-</script>
-</head>
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "react-dom": "https://esm.sh/react-dom@18.2.0"
+      }
+    }
+    </script>
+  </head>
   <body>
-    <div id="root"></div>
+    <!-- Initial Loading State: If React fails to mount, this text remains visible -->
+    <div id="root" class="flex h-screen w-full items-center justify-center flex-col gap-4">
+      <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      <div class="text-blue-400 font-mono text-sm tracking-widest animate-pulse">INITIALIZING BLUEPULSE...</div>
+    </div>
+    
+    <!-- Explicitly load the entry point -->
+    <script type="module" src="./index.tsx"></script>
   </body>
 </html>
