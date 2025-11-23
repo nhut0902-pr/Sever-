@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BlueCard, BlueButton, IconBox, Avatar } from './components/UIComponents';
 import { User, Post, ServerMetrics, Comment } from './types';
-import { analyzeSystemHealth } from './services/geminiService';
 
 // --- Mock Data ---
 const CURRENT_USER: User = {
@@ -44,8 +43,8 @@ const App: React.FC = () => {
         activeUsers: 1205,
         status: 'Healthy'
     });
-    const [aiAnalysis, setAiAnalysis] = useState<string>('');
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    
+    // AI State removed
     const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
     const [newPostContent, setNewPostContent] = useState('');
 
@@ -75,14 +74,6 @@ const App: React.FC = () => {
 
         return () => clearInterval(interval);
     }, []);
-
-    // Handle AI Analysis
-    const handleAiAnalysis = async () => {
-        setIsAnalyzing(true);
-        const report = await analyzeSystemHealth(metrics);
-        setAiAnalysis(report);
-        setIsAnalyzing(false);
-    };
 
     // Social Actions
     const handleLike = (postId: string) => {
@@ -158,25 +149,8 @@ const App: React.FC = () => {
                 <IconBox icon="fa-network-wired" label="Latency" value={`${metrics.latency}ms`} />
                 <IconBox icon="fa-users" label="Users" value={metrics.activeUsers} />
             </div>
-
-            <div className="mt-6 pt-4 border-t border-blue-500/20 relative z-10">
-                <div className="flex justify-between items-start">
-                    <div className="flex-1 mr-4">
-                        <h3 className="text-sm font-semibold text-blue-300 mb-1">AI System Diagnosis</h3>
-                        <p className="text-blue-100 text-sm italic min-h-[40px]">
-                            {aiAnalysis ? (
-                                <span className="typing-effect text-cyan-300">{aiAnalysis}</span>
-                            ) : (
-                                <span className="text-slate-400">Chờ phân tích...</span>
-                            )}
-                        </p>
-                    </div>
-                    <BlueButton onClick={handleAiAnalysis} disabled={isAnalyzing}>
-                         {isAnalyzing ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <i className="fa-solid fa-robot"></i>}
-                         {isAnalyzing ? 'Scanning...' : 'AI Scan'}
-                    </BlueButton>
-                </div>
-            </div>
+            
+            {/* AI Section Removed */}
         </BlueCard>
     );
 
