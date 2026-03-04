@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import MetricsCard from './components/MetricsCard';
 import ChatWindow from './components/ChatWindow';
 import ApiKeyModal from './components/ApiKeyModal';
 import Sidebar from './components/Sidebar';
@@ -15,6 +14,7 @@ const App: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [showSettings, setShowSettings] = useState(false);
     const [chatHistory, setChatHistory] = useState<string[]>([]);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const handleSaveKey = (key: string) => {
         localStorage.setItem('INCEPTION_API_KEY', key);
@@ -29,6 +29,7 @@ const App: React.FC = () => {
         }
         setMessages([]);
         setError(null);
+        setIsMobileMenuOpen(false);
     };
 
     const handleSend = async (e?: React.FormEvent) => {
@@ -52,7 +53,7 @@ const App: React.FC = () => {
                 setOutputTokens(prev => prev + response.usage!.completion_tokens);
             }
         } catch (err: any) {
-            setError(err.message || 'An error occurred');
+            setError(err.message || 'An error occurred. Please check your API key.');
             console.error(err);
         } finally {
             setIsLoading(false);
@@ -60,7 +61,7 @@ const App: React.FC = () => {
     };
 
     return (
-        <div className="flex h-screen bg-white">
+        <div className="flex h-screen bg-white font-sans text-gray-900">
             {/* API Key Setup for New Users */}
             {!apiKey && <ApiKeyModal onSave={handleSaveKey} />}
             
@@ -74,34 +75,74 @@ const App: React.FC = () => {
                 />
             )}
 
-            <Sidebar
-                onNewChat={handleNewChat}
-                onOpenSettings={() => setShowSettings(true)}
-                chatHistory={chatHistory}
-            />
+            {/* Mobile Header */}
+            <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center px-4 z-40">
+                <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 text-gray-500">
+                    <i className="fa-solid fa-bars-staggered"></i>
+                </button>
+                <div className="flex-1 text-center font-bold text-sm tracking-tight">Inception Chat</div>
+                <button onClick={handleNewChat} className="p-2 -mr-2 text-gray-500">
+                    <i className="fa-regular fa-pen-to-square"></i>
+                </button>
+            </header>
 
-            <main className="flex-1 flex flex-col relative h-full">
+            {/* Mobile Sidebar Overlay */}
+            {isMobileMenuOpen && (
+                <div
+                    className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 md:hidden"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                >
+                    <div
+                        className="w-72 h-full bg-white shadow-xl"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <Sidebar
+                            onNewChat={handleNewChat}
+                            onOpenSettings={() => {
+                                setShowSettings(true);
+                                setIsMobileMenuOpen(false);
+                            }}
+                            chatHistory={chatHistory}
+                        />
+                    </div>
+                </div>
+            )}
+
+            <div className="hidden md:flex h-full">
+                <Sidebar
+                    onNewChat={handleNewChat}
+                    onOpenSettings={() => setShowSettings(true)}
+                    chatHistory={chatHistory}
+                />
+            </div>
+
+            <main className="flex-1 flex flex-col relative h-full pt-14 md:pt-0">
                 {/* Header/Metrics Overlay */}
-                <div className="absolute top-0 left-0 right-0 p-4 z-10 flex justify-center pointer-events-none">
-                    <div className="flex gap-4 pointer-events-auto">
-                        <div className="bg-white/80 backdrop-blur-md border border-gray-100 rounded-full px-4 py-1.5 shadow-sm flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">In: {inputTokens}</span>
+                <div className="hidden md:flex absolute top-0 left-0 right-0 p-6 z-10 justify-center pointer-events-none">
+                    <div className="flex gap-3 pointer-events-auto">
+                        <div className="bg-white/60 backdrop-blur-xl border border-gray-100/50 rounded-2xl px-4 py-2 shadow-sm flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">In: {inputTokens}</span>
                         </div>
-                        <div className="bg-white/80 backdrop-blur-md border border-gray-100 rounded-full px-4 py-1.5 shadow-sm flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Out: {outputTokens}</span>
+                        <div className="bg-white/60 backdrop-blur-xl border border-gray-100/50 rounded-2xl px-4 py-2 shadow-sm flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(79,70,229,0.5)]"></div>
+                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Out: {outputTokens}</span>
                         </div>
                     </div>
                 </div>
 
                 <ChatWindow messages={messages} isLoading={isLoading} />
 
-                <div className="w-full max-w-3xl mx-auto px-4 pb-8">
+                <div className="w-full max-w-3xl mx-auto px-4 pb-6 md:pb-10">
                     {error && (
-                        <div className="mb-4 px-4 py-2 bg-red-50 text-red-600 text-xs rounded-xl border border-red-100 flex items-center justify-between">
-                            <span>Error: {error}</span>
-                            <button onClick={() => setError(null)} className="font-bold">×</button>
+                        <div className="mb-4 px-4 py-3 bg-red-50 text-red-600 text-xs rounded-2xl border border-red-100 flex items-center justify-between animate-in fade-in slide-in-from-bottom-2">
+                            <div className="flex items-center gap-2">
+                                <i className="fa-solid fa-circle-exclamation"></i>
+                                <span>{error}</span>
+                            </div>
+                            <button onClick={() => setError(null)} className="p-1 hover:bg-red-100 rounded-lg transition-colors">
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
                         </div>
                     )}
 
@@ -110,21 +151,25 @@ const App: React.FC = () => {
                             type="text"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
-                            placeholder="Message Inception AI..."
+                            placeholder="Type a message..."
                             disabled={isLoading}
-                            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 pr-14 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-400 transition-all shadow-sm group-hover:border-gray-300"
+                            className="w-full bg-gray-50/50 border border-gray-200 rounded-[24px] px-6 py-4.5 pr-16 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/50 focus:bg-white outline-none disabled:bg-gray-100 disabled:text-gray-400 transition-all shadow-sm group-hover:border-gray-300 text-base"
                         />
                         <button
                             type="submit"
                             disabled={isLoading || !input.trim()}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 bg-gray-900 hover:bg-black disabled:bg-gray-200 text-white w-10 h-10 rounded-xl transition-all flex items-center justify-center shadow-md active:scale-90"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-gray-900 hover:bg-black disabled:bg-gray-100 disabled:text-gray-400 text-white w-11 h-11 rounded-full transition-all flex items-center justify-center shadow-lg active:scale-90"
                         >
-                            <i className={`fa-solid ${isLoading ? 'fa-spinner fa-spin' : 'fa-arrow-up'}`}></i>
+                            {isLoading ? (
+                                <i className="fa-solid fa-circle-notch fa-spin"></i>
+                            ) : (
+                                <i className="fa-solid fa-arrow-up"></i>
+                            )}
                         </button>
                     </form>
 
-                    <p className="mt-3 text-center text-[10px] text-gray-400">
-                        Inception AI may provide inaccurate information. Check important info.
+                    <p className="mt-4 text-center text-[10px] text-gray-400 font-medium tracking-wide">
+                        Powered by Inception Labs Mercury-2
                     </p>
                 </div>
             </main>
