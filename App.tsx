@@ -1,303 +1,120 @@
 import React, { useState, useEffect } from 'react';
-import { BlueCard, BlueButton, IconBox, Avatar } from './components/UIComponents';
-import { User, Post, ServerMetrics, Comment } from './types';
+import MetricsCard from './components/MetricsCard';
+import ChatWindow from './components/ChatWindow';
+import ApiKeyModal from './components/ApiKeyModal';
+import { sendMessageToInception, Message } from './services/inceptionService';
 
-// --- Mock Data ---
-const CURRENT_USER: User = {
-    id: 'system',
-    name: 'System Monitor',
-    avatar: 'https://ui-avatars.com/api/?name=System+Monitor&background=2563eb&color=fff&bold=true',
-    role: 'Admin'
-};
-
-const INITIAL_POSTS: Post[] = [
-    {
-        id: 'p1',
-        userId: 'system',
-        userName: 'System Monitor',
-        userAvatar: 'https://ui-avatars.com/api/?name=System+Monitor&background=2563eb&color=fff&bold=true',
-        content: 'Bảo trì định kỳ hoàn tất. Kernel v5.14 đã được cập nhật thành công trên cụm máy chủ chính.',
-        likes: 125,
-        comments: [], 
-        timestamp: new Date(Date.now() - 3600000)
-    },
-    {
-        id: 'p2',
-        userId: 'system',
-        userName: 'System Monitor',
-        userAvatar: 'https://ui-avatars.com/api/?name=System+Monitor&background=2563eb&color=fff&bold=true',
-        content: 'Phát hiện lưu lượng truy cập bất thường từ dải IP 192.168.x.x. Firewall đã tự động kích hoạt rule block.',
-        likes: 42,
-        comments: [],
-        timestamp: new Date(Date.now() - 7200000)
-    }
-];
-
-// --- Main Component ---
 const App: React.FC = () => {
-    // State
-    const [metrics, setMetrics] = useState<ServerMetrics>({
-        cpu: 45,
-        memory: 60,
-        latency: 24,
-        activeUsers: 1205,
-        status: 'Healthy'
-    });
-    
-    // AI State removed
-    const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
-    const [newPostContent, setNewPostContent] = useState('');
+    const [apiKey, setApiKey] = useState<string | null>(localStorage.getItem('INCEPTION_API_KEY'));
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [input, setInput] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [inputTokens, setInputTokens] = useState(0);
+    const [outputTokens, setOutputTokens] = useState(0);
+    const [error, setError] = useState<string | null>(null);
 
-    // Simulate Server Metrics
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setMetrics(prev => {
-                const cpuChange = Math.floor(Math.random() * 10) - 5;
-                const newCpu = Math.min(100, Math.max(0, prev.cpu + cpuChange));
-                
-                const memChange = Math.floor(Math.random() * 5) - 2;
-                const newMem = Math.min(100, Math.max(0, prev.memory + memChange));
-
-                let status: ServerMetrics['status'] = 'Healthy';
-                if (newCpu > 80 || newMem > 90) status = 'Critical';
-                else if (newCpu > 60 || newMem > 75) status = 'Warning';
-
-                return {
-                    cpu: newCpu,
-                    memory: newMem,
-                    latency: 20 + Math.floor(Math.random() * 50),
-                    activeUsers: prev.activeUsers + Math.floor(Math.random() * 10) - 5,
-                    status
-                };
-            });
-        }, 3000);
-
-        return () => clearInterval(interval);
-    }, []);
-
-    // Social Actions
-    const handleLike = (postId: string) => {
-        setPosts(prev => prev.map(p => {
-            if (p.id === postId) {
-                return { 
-                    ...p, 
-                    likes: p.isLiked ? p.likes - 1 : p.likes + 1, 
-                    isLiked: !p.isLiked 
-                };
-            }
-            return p;
-        }));
+    const handleSaveKey = (key: string) => {
+        localStorage.setItem('INCEPTION_API_KEY', key);
+        setApiKey(key);
     };
 
-    const handleCreatePost = () => {
-        if (!newPostContent.trim()) return;
-        const newPost: Post = {
-            id: Date.now().toString(),
-            userId: CURRENT_USER.id,
-            userName: CURRENT_USER.name,
-            userAvatar: CURRENT_USER.avatar,
-            content: newPostContent,
-            likes: 0,
-            comments: [],
-            timestamp: new Date(),
-            isLiked: false
-        };
-        setPosts([newPost, ...posts]);
-        setNewPostContent('');
-    };
+    const handleSend = async (e?: React.FormEvent) => {
+        e?.preventDefault();
+        if (!input.trim() || !apiKey || isLoading) return;
 
-    const handleComment = (postId: string, content: string) => {
-        setPosts(prev => prev.map(p => {
-            if (p.id === postId) {
-                const newComment: Comment = {
-                    id: Date.now().toString(),
-                    userId: CURRENT_USER.id,
-                    userName: CURRENT_USER.name,
-                    userAvatar: CURRENT_USER.avatar,
-                    content: content,
-                    timestamp: new Date()
-                };
-                return { ...p, comments: [...p.comments, newComment] };
-            }
-            return p;
-        }));
-    };
+        const userMsg: Message = { role: 'user', content: input.trim() };
+        const newMessages = [...messages, userMsg];
+        setMessages(newMessages);
+        setInput('');
+        setIsLoading(true);
+        setError(null);
 
-    // --- Sub-components (Render Helpers) ---
-
-    const renderServerStatus = () => (
-        <BlueCard className="mb-6 relative overflow-hidden group border-blue-500/30">
-            {/* Background Glow Animation */}
-            <div className={`absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 transition-colors duration-1000 ${metrics.status === 'Critical' ? 'bg-red-500/20' : ''}`}></div>
+        try {
+            const response = await sendMessageToInception(newMessages, apiKey);
+            const aiMsg = response.choices[0].message;
+            setMessages(prev => [...prev, aiMsg]);
             
-            <div className="flex justify-between items-center mb-6 relative z-10">
-                <h2 className="text-2xl font-bold text-blue-50 flex items-center gap-3 text-shadow-glow">
-                    <i className="fa-solid fa-server text-blue-400"></i> Trạng Thái Server
-                </h2>
-                <span className={`px-3 py-1 rounded-full text-sm font-bold border ${
-                    metrics.status === 'Healthy' ? 'bg-green-500/10 text-green-400 border-green-500/30' :
-                    metrics.status === 'Warning' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30' :
-                    'bg-red-500/10 text-red-400 border-red-500/30'
-                }`}>
-                    {metrics.status.toUpperCase()}
-                </span>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
-                <IconBox icon="fa-microchip" label="CPU Usage" value={`${metrics.cpu}%`} color={metrics.cpu > 80 ? 'text-red-400' : 'text-blue-400'} />
-                <IconBox icon="fa-memory" label="Memory" value={`${metrics.memory}%`} color={metrics.memory > 80 ? 'text-yellow-400' : 'text-blue-400'} />
-                <IconBox icon="fa-network-wired" label="Latency" value={`${metrics.latency}ms`} />
-                <IconBox icon="fa-users" label="Users" value={metrics.activeUsers} />
-            </div>
-            
-            {/* AI Section Removed */}
-        </BlueCard>
-    );
-
-    const renderFeed = () => (
-        <div className="space-y-6">
-            {/* Create Post */}
-            <BlueCard>
-                <div className="flex gap-4">
-                    <Avatar src={CURRENT_USER.avatar} />
-                    <div className="flex-1">
-                        <textarea 
-                            className="w-full bg-slate-800/50 border border-blue-500/20 rounded-lg p-3 text-blue-50 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none transition-all"
-                            rows={3}
-                            placeholder="Ghi nhận log hệ thống..."
-                            value={newPostContent}
-                            onChange={(e) => setNewPostContent(e.target.value)}
-                        ></textarea>
-                        <div className="flex justify-end mt-2">
-                            <BlueButton onClick={handleCreatePost} className="text-sm">
-                                <i className="fa-solid fa-paper-plane"></i> Gửi Log
-                            </BlueButton>
-                        </div>
-                    </div>
-                </div>
-            </BlueCard>
-
-            {/* Posts List */}
-            {posts.map(post => (
-                <PostItem 
-                    key={post.id} 
-                    post={post} 
-                    onLike={() => handleLike(post.id)} 
-                    onComment={(content) => handleComment(post.id, content)}
-                />
-            ))}
-        </div>
-    );
-
-    return (
-        <div className="min-h-screen pb-20">
-            {/* Header */}
-            <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-lg border-b border-blue-500/20 shadow-lg shadow-blue-900/10">
-                <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.4)]">
-                            <i className="fa-solid fa-bolt text-white text-xl"></i>
-                        </div>
-                        <h1 className="text-xl font-bold text-white tracking-wide">Blue<span className="text-blue-400">Pulse</span> Monitor</h1>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="flex flex-col items-end">
-                            <span className="text-xs text-blue-300 uppercase tracking-wider hidden sm:block">System Status</span>
-                            <span className="text-[10px] text-green-400 font-mono hidden sm:block">LIVE MONITORING</span>
-                        </div>
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e]"></div>
-                    </div>
-                </div>
-            </header>
-
-            <main className="max-w-4xl mx-auto px-4 py-8">
-                {renderServerStatus()}
-                {renderFeed()}
-            </main>
-        </div>
-    );
-};
-
-// --- Sub Component: Post Item ---
-const PostItem: React.FC<{ post: Post; onLike: () => void; onComment: (content: string) => void }> = ({ post, onLike, onComment }) => {
-    const [commentText, setCommentText] = useState('');
-    const [showComments, setShowComments] = useState(false);
-
-    const submitComment = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (commentText.trim()) {
-            onComment(commentText);
-            setCommentText('');
-            setShowComments(true);
+            if (response.usage) {
+                setInputTokens(prev => prev + response.usage!.prompt_tokens);
+                setOutputTokens(prev => prev + response.usage!.completion_tokens);
+            }
+        } catch (err: any) {
+            setError(err.message || 'An error occurred');
+            console.error(err);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
-        <BlueCard className="mb-4">
-            <div className="flex items-start gap-4 mb-4">
-                <Avatar src={post.userAvatar} />
+        <div className="max-w-4xl mx-auto px-4 py-8">
+            {!apiKey && <ApiKeyModal onSave={handleSaveKey} />}
+            
+            <header className="mb-8 flex justify-between items-center">
                 <div>
-                    <h3 className="font-bold text-blue-100">{post.userName}</h3>
-                    <p className="text-xs text-blue-400">{post.timestamp.toLocaleTimeString()} - {post.timestamp.toLocaleDateString()}</p>
+                    <h1 className="text-2xl font-bold text-gray-900">Inception AI Chat</h1>
+                    <p className="text-gray-500 text-sm">Powered by mercury-2</p>
                 </div>
-            </div>
-            
-            <p className="text-slate-200 mb-4 leading-relaxed whitespace-pre-line">{post.content}</p>
-            
-            {post.image && (
-                <div className="mb-4 rounded-lg overflow-hidden border border-blue-500/20">
-                    <img src={post.image} alt="Post content" className="w-full h-auto" />
-                </div>
-            )}
+                {apiKey && (
+                    <button
+                        onClick={() => setApiKey(null)}
+                        className="text-xs text-gray-400 hover:text-gray-600 underline"
+                    >
+                        Update API Key
+                    </button>
+                )}
+            </header>
 
-            <div className="flex items-center gap-6 border-t border-blue-500/20 pt-3">
-                <button 
-                    onClick={onLike}
-                    className={`flex items-center gap-2 transition-colors ${post.isLiked ? 'text-blue-400' : 'text-slate-400 hover:text-blue-400'}`}
-                >
-                    <i className={`${post.isLiked ? 'fa-solid' : 'fa-regular'} fa-thumbs-up`}></i>
-                    <span>{post.likes} Ack</span>
-                </button>
-                <button 
-                    onClick={() => setShowComments(!showComments)}
-                    className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors"
-                >
-                    <i className="fa-regular fa-comment"></i>
-                    <span>{post.comments.length} Log</span>
-                </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <MetricsCard
+                    label="Input Tokens"
+                    value={inputTokens}
+                    color="bg-green-500"
+                    subtext="Last 24 hours"
+                />
+                <MetricsCard
+                    label="Output Tokens"
+                    value={outputTokens}
+                    color="bg-purple-500"
+                    subtext="Last 24 hours"
+                />
             </div>
 
-            {/* Comment Section */}
-            {(showComments || post.comments.length > 0) && (
-                <div className={`mt-4 space-y-3 ${!showComments ? 'hidden' : ''}`}>
-                    {post.comments.map(comment => (
-                        <div key={comment.id} className="flex gap-3 p-3 bg-slate-800/40 rounded-lg border border-blue-500/10">
-                            <Avatar src={comment.userAvatar} size="sm" />
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-sm text-blue-200">{comment.userName}</span>
-                                    <span className="text-[10px] text-slate-500">{comment.timestamp.toLocaleTimeString()}</span>
-                                </div>
-                                <p className="text-sm text-slate-300">{comment.content}</p>
-                            </div>
-                        </div>
-                    ))}
-                    
-                    <form onSubmit={submitComment} className="flex gap-2 mt-3">
-                        <input 
-                            type="text" 
-                            value={commentText}
-                            onChange={(e) => setCommentText(e.target.value)}
-                            placeholder="Ghi chú..." 
-                            className="flex-1 bg-slate-800/50 border border-blue-500/20 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
-                        />
-                        <button type="submit" className="text-blue-500 hover:text-blue-400 px-2">
-                            <i className="fa-solid fa-paper-plane"></i>
-                        </button>
-                    </form>
-                </div>
-            )}
-        </BlueCard>
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col min-h-[500px]">
+                <ChatWindow messages={messages} isLoading={isLoading} />
+
+                {error && (
+                    <div className="px-4 py-2 bg-red-50 text-red-600 text-xs border-t border-red-100 flex items-center justify-between">
+                        <span>Error: {error}</span>
+                        <button onClick={() => setError(null)} className="font-bold">×</button>
+                    </div>
+                )}
+
+                <form onSubmit={handleSend} className="p-4 border-t border-gray-100 bg-gray-50 flex gap-2">
+                    <input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder="Type your message..."
+                        disabled={isLoading}
+                        className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-400 transition-all shadow-inner"
+                    />
+                    <button
+                        type="submit"
+                        disabled={isLoading || !input.trim()}
+                        className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white p-3 rounded-lg transition-all shadow-md active:scale-95"
+                    >
+                        <i className={`fa-solid ${isLoading ? 'fa-spinner fa-spin' : 'fa-paper-plane'}`}></i>
+                    </button>
+                </form>
+            </div>
+
+            <div className="mt-8 text-center">
+                <p className="text-xs text-gray-400">
+                    Mercury-2 model | API Version v1 | Distributed via Inception Labs
+                </p>
+            </div>
+        </div>
     );
 };
 
