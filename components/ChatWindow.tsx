@@ -14,43 +14,61 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ messages, isLoading }) => {
   }, [messages, isLoading]);
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-[400px]">
-      {messages.length === 0 && (
-        <div className="h-full flex items-center justify-center text-gray-400 text-sm italic">
-          No messages yet. Start a conversation!
-        </div>
-      )}
-      {messages.map((msg, i) => (
-        <div
-          key={i}
-          className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-        >
+    <div className="flex-1 overflow-y-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto space-y-8">
+        {messages.length === 0 && (
+          <div className="h-[60vh] flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 text-blue-600 shadow-sm">
+              <i className="fa-solid fa-robot text-3xl"></i>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">How can I help you today?</h2>
+            <p className="text-gray-500 max-w-sm">
+              I'm your Inception AI assistant. Ask me anything about coding, creative writing, or data analysis.
+            </p>
+          </div>
+        )}
+        {messages.map((msg, i) => (
           <div
-            className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-              msg.role === 'user'
-                ? 'bg-blue-600 text-white rounded-br-none shadow-md shadow-blue-200'
-                : 'bg-gray-100 text-gray-800 rounded-bl-none border border-gray-200 shadow-sm'
-            }`}
+            key={i}
+            className={`flex items-start gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            <div className="text-[10px] uppercase font-bold opacity-50 mb-1">
-              {msg.role === 'user' ? 'You' : 'AI'}
+            {msg.role === 'assistant' && (
+              <div className="w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center flex-shrink-0 text-xs shadow-sm">
+                <i className="fa-solid fa-bolt"></i>
+              </div>
+            )}
+            <div
+              className={`max-w-[85%] rounded-2xl px-5 py-3 ${
+                msg.role === 'user'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'bg-white border border-gray-100 shadow-sm text-gray-800'
+              }`}
+            >
+              <div className="text-base leading-relaxed whitespace-pre-wrap">{msg.content}</div>
             </div>
-            <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
+            {msg.role === 'user' && (
+              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0 text-xs shadow-sm border border-blue-200">
+                <i className="fa-solid fa-user"></i>
+              </div>
+            )}
           </div>
-        </div>
-      ))}
-      {isLoading && (
-        <div className="flex justify-start">
-          <div className="bg-gray-100 border border-gray-200 rounded-2xl rounded-bl-none px-4 py-3 shadow-sm">
-            <div className="flex space-x-1">
-              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-              <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+        ))}
+        {isLoading && (
+          <div className="flex items-start gap-4">
+            <div className="w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center flex-shrink-0 text-xs shadow-sm">
+              <i className="fa-solid fa-bolt"></i>
+            </div>
+            <div className="bg-white border border-gray-100 shadow-sm rounded-2xl px-5 py-3">
+              <div className="flex space-x-2 py-1">
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      <div ref={bottomRef} />
+        )}
+        <div ref={bottomRef} className="h-4" />
+      </div>
     </div>
   );
 };

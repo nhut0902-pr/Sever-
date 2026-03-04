@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import MetricsCard from './components/MetricsCard';
 import ChatWindow from './components/ChatWindow';
 import ApiKeyModal from './components/ApiKeyModal';
+import Sidebar from './components/Sidebar';
 import { sendMessageToInception, Message } from './services/inceptionService';
 
 const App: React.FC = () => {
@@ -12,10 +13,22 @@ const App: React.FC = () => {
     const [inputTokens, setInputTokens] = useState(0);
     const [outputTokens, setOutputTokens] = useState(0);
     const [error, setError] = useState<string | null>(null);
+    const [showSettings, setShowSettings] = useState(false);
+    const [chatHistory, setChatHistory] = useState<string[]>([]);
 
     const handleSaveKey = (key: string) => {
         localStorage.setItem('INCEPTION_API_KEY', key);
         setApiKey(key);
+        setShowSettings(false);
+    };
+
+    const handleNewChat = () => {
+        if (messages.length > 0) {
+            const firstMsg = messages[0].content.substring(0, 30) + (messages[0].content.length > 30 ? '...' : '');
+            setChatHistory(prev => [firstMsg, ...prev.slice(0, 9)]);
+        }
+        setMessages([]);
+        setError(null);
     };
 
     const handleSend = async (e?: React.FormEvent) => {
@@ -47,73 +60,74 @@ const App: React.FC = () => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="flex h-screen bg-white">
+            {/* API Key Setup for New Users */}
             {!apiKey && <ApiKeyModal onSave={handleSaveKey} />}
             
-            <header className="mb-8 flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Inception AI Chat</h1>
-                    <p className="text-gray-500 text-sm">Powered by mercury-2</p>
+            {/* Settings Modal */}
+            {showSettings && (
+                <ApiKeyModal
+                    onSave={handleSaveKey}
+                    onClose={() => setShowSettings(false)}
+                    initialValue={apiKey || ''}
+                    isSettings={true}
+                />
+            )}
+
+            <Sidebar
+                onNewChat={handleNewChat}
+                onOpenSettings={() => setShowSettings(true)}
+                chatHistory={chatHistory}
+            />
+
+            <main className="flex-1 flex flex-col relative h-full">
+                {/* Header/Metrics Overlay */}
+                <div className="absolute top-0 left-0 right-0 p-4 z-10 flex justify-center pointer-events-none">
+                    <div className="flex gap-4 pointer-events-auto">
+                        <div className="bg-white/80 backdrop-blur-md border border-gray-100 rounded-full px-4 py-1.5 shadow-sm flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">In: {inputTokens}</span>
+                        </div>
+                        <div className="bg-white/80 backdrop-blur-md border border-gray-100 rounded-full px-4 py-1.5 shadow-sm flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Out: {outputTokens}</span>
+                        </div>
+                    </div>
                 </div>
-                {apiKey && (
-                    <button
-                        onClick={() => setApiKey(null)}
-                        className="text-xs text-gray-400 hover:text-gray-600 underline"
-                    >
-                        Update API Key
-                    </button>
-                )}
-            </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                <MetricsCard
-                    label="Input Tokens"
-                    value={inputTokens}
-                    color="bg-green-500"
-                    subtext="Last 24 hours"
-                />
-                <MetricsCard
-                    label="Output Tokens"
-                    value={outputTokens}
-                    color="bg-purple-500"
-                    subtext="Last 24 hours"
-                />
-            </div>
-
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col min-h-[500px]">
                 <ChatWindow messages={messages} isLoading={isLoading} />
 
-                {error && (
-                    <div className="px-4 py-2 bg-red-50 text-red-600 text-xs border-t border-red-100 flex items-center justify-between">
-                        <span>Error: {error}</span>
-                        <button onClick={() => setError(null)} className="font-bold">×</button>
-                    </div>
-                )}
+                <div className="w-full max-w-3xl mx-auto px-4 pb-8">
+                    {error && (
+                        <div className="mb-4 px-4 py-2 bg-red-50 text-red-600 text-xs rounded-xl border border-red-100 flex items-center justify-between">
+                            <span>Error: {error}</span>
+                            <button onClick={() => setError(null)} className="font-bold">×</button>
+                        </div>
+                    )}
 
-                <form onSubmit={handleSend} className="p-4 border-t border-gray-100 bg-gray-50 flex gap-2">
-                    <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder="Type your message..."
-                        disabled={isLoading}
-                        className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-400 transition-all shadow-inner"
-                    />
-                    <button
-                        type="submit"
-                        disabled={isLoading || !input.trim()}
-                        className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white p-3 rounded-lg transition-all shadow-md active:scale-95"
-                    >
-                        <i className={`fa-solid ${isLoading ? 'fa-spinner fa-spin' : 'fa-paper-plane'}`}></i>
-                    </button>
-                </form>
-            </div>
+                    <form onSubmit={handleSend} className="relative group">
+                        <input
+                            type="text"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            placeholder="Message Inception AI..."
+                            disabled={isLoading}
+                            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 pr-14 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-400 transition-all shadow-sm group-hover:border-gray-300"
+                        />
+                        <button
+                            type="submit"
+                            disabled={isLoading || !input.trim()}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 bg-gray-900 hover:bg-black disabled:bg-gray-200 text-white w-10 h-10 rounded-xl transition-all flex items-center justify-center shadow-md active:scale-90"
+                        >
+                            <i className={`fa-solid ${isLoading ? 'fa-spinner fa-spin' : 'fa-arrow-up'}`}></i>
+                        </button>
+                    </form>
 
-            <div className="mt-8 text-center">
-                <p className="text-xs text-gray-400">
-                    Mercury-2 model | API Version v1 | Distributed via Inception Labs
-                </p>
-            </div>
+                    <p className="mt-3 text-center text-[10px] text-gray-400">
+                        Inception AI may provide inaccurate information. Check important info.
+                    </p>
+                </div>
+            </main>
         </div>
     );
 };
